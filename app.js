@@ -1,6 +1,6 @@
 const express = require('express')
 const mongoose = require('mongoose')
-const { campgroundSchema } = require('./schemas')
+const { campgroundSchema, reviewSchema } = require('./schemas')
 const path = require('path');
 const ejsMate = require('ejs-mate') // just one of many engine
 const catchAsync = require('./utils/catchAsync')
@@ -31,6 +31,16 @@ app.use(methodOverride('_method'))
 
 const validateCampground = (req, res, next) => {
     const { error } = campgroundSchema.validate(req.body)
+    if (error) {
+        const msg = error.details.map(el => el.message).join(',')
+        throw new ExpressError(msg, 400)
+    } else {
+        next()
+    }
+}
+
+const validateReview = (req, res, next) => {
+    const { error } = reviewSchema.validate(req.body)
     if (error) {
         const msg = error.details.map(el => el.message).join(',')
         throw new ExpressError(msg, 400)
@@ -88,9 +98,8 @@ app.delete('/campgrounds/:id', catchAsync(async (req, res) => {
     res.redirect('/campgrounds')
 }))
 
-app.post('/campgrounds/:id/reviews', catchAsync(async(req, res) => {
+app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async(req, res) => {
     const campground = await Campground.findById(req.params.id)
-    console.log('review: ', req.body.review)
     const review = new Review(req.body.review)
     campground.reviews.push(review)
     await review.save()
@@ -99,7 +108,7 @@ app.post('/campgrounds/:id/reviews', catchAsync(async(req, res) => {
 }))
 
 app.all('*', (req, res, next) => {
-    next(new ExpressError('Page Not Foundeeeeee', 404))
+    next(new ExpressError('Page Not Found', 404))
 })
 
 app.use((err, req, res, next) => {
