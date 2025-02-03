@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const path = require('path');
 const ejsMate = require('ejs-mate') // just one of many engine
+const session = require('express-session')
 const ExpressError = require('./utils/ExpressError')
 const methodOverride = require('method-override')
 const campgroundsRouter = require('./routes/campgrounds')
@@ -20,15 +21,35 @@ db.once("open", () => {
 
 const app = express();
 
+const sessionConfig = {
+    secret: 'thisshouldbeabettersecret',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+}
+app.use(session(sessionConfig))
+
+app.use((req, res, next) => {
+    console.log('Req: ', req.url)
+    console.log('Session Data:', req.session);
+    next(); // Pass control to the next middleware or route handler
+});
+
 app.engine('ejs', ejsMate)
 app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
 app.use(methodOverride('_method'))
+app.use(express.static(path.join(__dirname, 'public')))
 
 app.use('/campgrounds', campgroundsRouter)
 app.use('/campgrounds/:id/reviews', campgroundReviewRouter )
+
 
 app.get('/', (req, res) => {
     res.render('home')
