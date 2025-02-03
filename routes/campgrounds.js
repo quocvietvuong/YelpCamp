@@ -7,7 +7,6 @@ const { campgroundSchema } = require('../schemas')
 
 router.get('/', catchAsync(async (req, res) => {
     const campgrounds = await Campground.find({});
-    console.log('Campground List: ', campgrounds)
     res.render('campgrounds/index', { campgrounds })
 }))
 
@@ -34,12 +33,20 @@ router.post('/', validateCampground, catchAsync(async (req,res, next) => {
 
 router.get('/:id', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id).populate('reviews')
+    if (!campground) {
+        req.flash('error', 'Cannot find that campground!')
+        return res.redirect('/campgrounds')
+    }
     console.log('Campground details: ', campground)
     res.render('campgrounds/show', { campground })
 }))
 
 router.get('/:id/edit', catchAsync(async (req, res) => {
     const campground = await Campground.findById(req.params.id)
+    if (!campground) {
+        req.flash('error', 'Cannot find that campground!')
+        return res.redirect('/campgrounds')
+    }
     console.log('found campground: ', campground)
     res.render('campgrounds/edit', { campground })
 }))
