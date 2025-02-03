@@ -3,7 +3,7 @@ const router = express.Router()
 const catchAsync = require('../utils/catchAsync')
 const ExpressError = require('../utils/ExpressError')
 const Campground = require('../models/campground');
-const campgroundSchema = require('../schemas')
+const { campgroundSchema } = require('../schemas')
 
 router.get('/', catchAsync(async (req, res) => {
     const campgrounds = await Campground.find({});
@@ -26,10 +26,9 @@ const validateCampground = (req, res, next) => {
 }
 
 router.post('/', validateCampground, catchAsync(async (req,res, next) => {
-    console.log('req.body: ', req.body)
     const campground = new Campground(req.body.campground)
-    console.log('campground model object: ', campground)
     await campground.save()
+    req.flash('success', 'Successfully made a new campground!')
     res.redirect(`/campgrounds/${campground._id}`)
 }))
 

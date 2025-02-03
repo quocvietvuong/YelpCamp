@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const path = require('path');
 const ejsMate = require('ejs-mate') // just one of many engine
 const session = require('express-session')
+const flash = require('connect-flash')
 const ExpressError = require('./utils/ExpressError')
 const methodOverride = require('method-override')
 const campgroundsRouter = require('./routes/campgrounds')
@@ -32,11 +33,11 @@ const sessionConfig = {
     },
 }
 app.use(session(sessionConfig))
-
+app.use(flash())
 app.use((req, res, next) => {
-    console.log('Req: ', req.url)
-    console.log('Session Data:', req.session);
-    next(); // Pass control to the next middleware or route handler
+    res.locals.success = req.flash('success')
+    res.locals.error = req.flash('error')
+    next()
 });
 
 app.engine('ejs', ejsMate)
